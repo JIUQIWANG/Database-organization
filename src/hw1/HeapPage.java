@@ -18,8 +18,6 @@ public class HeapPage {
 	private int numSlots;
 	private int tableId;
 
-
-
 	public HeapPage(int id, byte[] data, int tableId) throws IOException {
 		this.id = id;
 		this.tableId = tableId;
@@ -30,91 +28,136 @@ public class HeapPage {
 
 		// allocate and read the header slots of this page
 		header = new byte[getHeaderSize()];
-		for (int i=0; i<header.length; i++)
+		for (int i = 0; i < header.length; i++)
 			header[i] = dis.readByte();
 
-		try{
+		try {
 			// allocate and read the actual records of this page
 			tuples = new Tuple[numSlots];
-			for (int i=0; i<tuples.length; i++)
-				tuples[i] = readNextTuple(dis,i);
-		}catch(NoSuchElementException e){
+			for (int i = 0; i < tuples.length; i++)
+				tuples[i] = readNextTuple(dis, i);
+		} catch (NoSuchElementException e) {
 			e.printStackTrace();
 		}
 		dis.close();
 	}
 
 	public int getId() {
-		//your code here
-		return 0;
+		// your code here
+		return id;
 	}
 
 	/**
-	 * Computes and returns the total number of slots that are on this page (occupied or not).
-	 * Must take the header into account!
+	 * Computes and returns the total number of slots that are on this page
+	 * (occupied or not). Must take the header into account!
+	 * 
 	 * @return number of slots on this page
 	 */
 	public int getNumSlots() {
-		//your code here
-		return 0;
+		// your code here
+		int tupleSize = td.getSize();
+		int res = 0;
+		for (int i = 1; i <= 2048; i++) {
+			int remain = HeapFile.PAGE_SIZE - i;
+			if (remain / tupleSize <= 4 * i) {
+				res = remain / tupleSize;
+			}
+		}
+		return res;
 	}
 
 	/**
-	 * Computes the size of the header. Headers must be a whole number of bytes (no partial bytes)
+	 * Computes the size of the header. Headers must be a whole number of bytes (no
+	 * partial bytes)
+	 * 
 	 * @return size of header in bytes
 	 */
-	private int getHeaderSize() {        
-		//your code here
-		return 0;
+	private int getHeaderSize() {
+		// your code here
+		if (numSlots % 4 == 0)
+			return numSlots / 4;
+		else
+			return numSlots / 4 + 1;
 	}
 
 	/**
 	 * Checks to see if a slot is occupied or not by checking the header
+	 * 
 	 * @param s the slot to test
 	 * @return true if occupied
 	 */
 	public boolean slotOccupied(int s) {
-		//your code here
-		return false;
+		// your code here
+		int index = s / 4;
+		int offset = s % 4;
+		if (((header[index] >> offset) & 1) == 1)
+			return true;
+		else
+			return false;
 	}
 
 	/**
 	 * Sets the occupied status of a slot by modifying the header
-	 * @param s the slot to modify
+	 * 
+	 * @param s     the slot to modify
 	 * @param value its occupied status
 	 */
 	public void setSlotOccupied(int s, boolean value) {
-		//your code here
+		// your code here
+		int index = s / 4;
+		int offset = s % 4;
+		if (value == true) {
+			header[index] = (byte) (header[index] | (1 << offset));
+		} else {
+			header[index] = (byte) (header[index] & ~(1 << offset));
+		}
 	}
-	
+
 	/**
-	 * Adds the given tuple in the next available slot. Throws an exception if no empty slots are available.
-	 * Also throws an exception if the given tuple does not have the same structure as the tuples within the page.
+	 * Adds the given tuple in the next available slot. Throws an exception if no
+	 * empty slots are available. Also throws an exception if the given tuple does
+	 * not have the same structure as the tuples within the page.
+	 * 
 	 * @param t the tuple to be added.
 	 * @throws Exception
 	 */
 	public void addTuple(Tuple t) throws Exception {
-		//your code here
+		// your code here
+		if (tuples.length == numSlots) {
+			throw new IllegalStateException();
+		}
+		if (tuples.length > 0 && t.getDesc().equals(tuples[0].getDesc()))
+			throw new IllegalStateException();
+		int nextIndex = tuples.length;
+		tuples[nextIndex] = t;
+		setSlotOccupied(nextIndex, true);
 	}
 
 	/**
-	 * Removes the given Tuple from the page. If the page id from the tuple does not match this page, throw
-	 * an exception. If the tuple slot is already empty, throw an exception
+	 * Removes the given Tuple from the page. If the page id from the tuple does not
+	 * match this page, throw an exception. If the tuple slot is already empty,
+	 * throw an exception
+	 * 
 	 * @param t the tuple to be deleted
 	 * @throws Exception
 	 */
-	public void deleteTuple(Tuple t) {
-		//your code here
+	public void deleteTuple(Tuple t) throws Exception {
+		// your code here
+		if(id!=t.getPid())
+		{
+			throw new IllegalStateException();
+		}
+		for(int i=0)
 	}
-	
+
 	/**
-     * Suck up tuples from the source file.
-     */
+	 * Suck up tuples from the source file.
+	 */
 	private Tuple readNextTuple(DataInputStream dis, int slotId) {
 		// if associated bit is not set, read forward to the next tuple, and
 		// return null.
 		if (!slotOccupied(slotId)) {
-			for (int i=0; i<td.getSize(); i++) {
+			for (int i = 0; i < td.getSize(); i++) {
 				try {
 					dis.readByte();
 				} catch (IOException e) {
@@ -129,8 +172,8 @@ public class HeapPage {
 		t.setPid(this.id);
 		t.setId(slotId);
 
-		for (int j=0; j<td.numFields(); j++) {
-			if(td.getType(j) == Type.INT) {
+		for (int j = 0; j < td.numFields(); j++) {
+			if (td.getType(j) == Type.INT) {
 				byte[] field = new byte[4];
 				try {
 					dis.read(field);
@@ -151,27 +194,26 @@ public class HeapPage {
 			}
 		}
 
-
 		return t;
 	}
 
 	/**
-     * Generates a byte array representing the contents of this page.
-     * Used to serialize this page to disk.
+	 * Generates a byte array representing the contents of this page. Used to
+	 * serialize this page to disk.
 	 *
-     * The invariant here is that it should be possible to pass the byte
-     * array generated by getPageData to the HeapPage constructor and
-     * have it produce an identical HeapPage object.
-     *
-     * @return A byte array correspond to the bytes of this page.
-     */
+	 * The invariant here is that it should be possible to pass the byte array
+	 * generated by getPageData to the HeapPage constructor and have it produce an
+	 * identical HeapPage object.
+	 *
+	 * @return A byte array correspond to the bytes of this page.
+	 */
 	public byte[] getPageData() {
 		int len = HeapFile.PAGE_SIZE;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream(len);
 		DataOutputStream dos = new DataOutputStream(baos);
 
 		// create the header of the page
-		for (int i=0; i<header.length; i++) {
+		for (int i = 0; i < header.length; i++) {
 			try {
 				dos.writeByte(header[i]);
 			} catch (IOException e) {
@@ -181,11 +223,11 @@ public class HeapPage {
 		}
 
 		// create the tuples
-		for (int i=0; i<tuples.length; i++) {
+		for (int i = 0; i < tuples.length; i++) {
 
 			// empty slot
 			if (!slotOccupied(i)) {
-				for (int j=0; j<td.getSize(); j++) {
+				for (int j = 0; j < td.getSize(); j++) {
 					try {
 						dos.writeByte(0);
 					} catch (IOException e) {
@@ -197,7 +239,7 @@ public class HeapPage {
 			}
 
 			// non-empty slot
-			for (int j=0; j<td.numFields(); j++) {
+			for (int j = 0; j < td.numFields(); j++) {
 				Field f = tuples[i].getField(j);
 				try {
 					dos.write(f.toByteArray());
@@ -209,7 +251,7 @@ public class HeapPage {
 		}
 
 		// padding
-		int zerolen = HeapFile.PAGE_SIZE - (header.length + td.getSize() * tuples.length); //- numSlots * td.getSize();
+		int zerolen = HeapFile.PAGE_SIZE - (header.length + td.getSize() * tuples.length); // - numSlots * td.getSize();
 		byte[] zeroes = new byte[zerolen];
 		try {
 			dos.write(zeroes, 0, zerolen);
@@ -227,11 +269,12 @@ public class HeapPage {
 	}
 
 	/**
-	 * Returns an iterator that can be used to access all tuples on this page. 
+	 * Returns an iterator that can be used to access all tuples on this page.
+	 * 
 	 * @return
 	 */
 	public Iterator<Tuple> iterator() {
-		//your code here
+		// your code here
 		return null;
 	}
 }

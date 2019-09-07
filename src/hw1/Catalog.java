@@ -4,94 +4,133 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.KeyStore.Entry;
 import java.util.*;
 
 /**
  * The Catalog keeps track of all available tables in the database and their
- * associated schemas.
- * For now, this is a stub catalog that must be populated with tables by a
- * user program before it can be used -- eventually, this should be converted
- * to a catalog that reads a catalog table from disk.
+ * associated schemas. For now, this is a stub catalog that must be populated
+ * with tables by a user program before it can be used -- eventually, this
+ * should be converted to a catalog that reads a catalog table from disk.
  */
 
 public class Catalog {
-	
+
     /**
-     * Constructor.
-     * Creates a new, empty catalog.
+     * Constructor. Creates a new, empty catalog.
      */
+    class tableInfo {
+        public HeapFile file;
+        public String tableName;
+        public String pKeyName;
+
+        public tableInfo(HeapFile f, String name, String pKey) {
+            file = f;
+            tableName = name;
+            pKeyName = pKey;
+        }
+    }
+
+    private Map<Integer, Integer> nameToTableID;
+    private Map<Integer, tableInfo> tableList;
+
     public Catalog() {
-    	//your code here
+        // your code here
+        tableList = new HashMap<>();
+        nameToTableID = new HashMap<>();
     }
 
     /**
-     * Add a new table to the catalog.
-     * This table's contents are stored in the specified HeapFile.
-     * @param file the contents of the table to add;  file.getId() is the identfier of
-     *    this file/tupledesc param for the calls getTupleDesc and getFile
-     * @param name the name of the table -- may be an empty string.  May not be null.  If a name conflict exists, use the last table to be added as the table for a given name.
+     * Add a new table to the catalog. This table's contents are stored in the
+     * specified HeapFile.
+     * 
+     * @param file      the contents of the table to add; file.getId() is the
+     *                  identfier of this file/tupledesc param for the calls
+     *                  getTupleDesc and getFile
+     * @param name      the name of the table -- may be an empty string. May not be
+     *                  null. If a name conflict exists, use the last table to be
+     *                  added as the table for a given name.
      * @param pkeyField the name of the primary key field
      */
     public void addTable(HeapFile file, String name, String pkeyField) {
-    	//your code here
+        // your code here
+        tableList.put(file.getId(), new tableInfo(file, name, pkeyField));
+        nameToTableID.put(name.hashCode(), file.getId());
     }
 
     public void addTable(HeapFile file, String name) {
-        addTable(file,name,"");
+        addTable(file, name, "");
     }
 
     /**
      * Return the id of the table with a specified name,
+     * 
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) {
-    	//your code here
-    	return 0;
+        // your code here
+        return nameToTableID.get(name.hashCode());
     }
 
     /**
      * Returns the tuple descriptor (schema) of the specified table
+     * 
      * @param tableid The id of the table, as specified by the DbFile.getId()
-     *     function passed to addTable
+     *                function passed to addTable
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-    	//your code here
-    	return null;
+        // your code here
+        if (!tableList.containsKey(tableid)) {
+            throw new NoSuchElementException();
+        }
+        return tableList.get(tableid).file.getTupleDesc();
     }
 
     /**
-     * Returns the HeapFile that can be used to read the contents of the
-     * specified table.
+     * Returns the HeapFile that can be used to read the contents of the specified
+     * table.
+     * 
      * @param tableid The id of the table, as specified by the HeapFile.getId()
-     *     function passed to addTable
+     *                function passed to addTable
      */
     public HeapFile getDbFile(int tableid) throws NoSuchElementException {
-    	//your code here
-    	return null;
+        // your code here
+        if (!tableList.containsKey(tableid)) {
+            throw new NoSuchElementException();
+        }
+        return tableList.get(tableid).file;
     }
 
     /** Delete all tables from the catalog */
     public void clear() {
-    	//your code here
+        // your code here
+        nameToTableID.clear();
+        tableList.clear();
     }
 
     public String getPrimaryKey(int tableid) {
-    	//your code here
-    	return null;
+        // your code here
+        return tableList.get(tableid).pKeyName;
     }
 
     public Iterator<Integer> tableIdIterator() {
-    	//your code here
-    	return null;
+        // your code here
+        List<Integer> res = new ArrayList<>();
+        for (Map.Entry<Integer, tableInfo> val : tableList.entrySet()) {
+            res.add(val.getKey());
+        }
+        return res.iterator();
     }
 
     public String getTableName(int id) {
-    	//your code here
-    	return null;
+        // your code here
+        return tableList.get(id).tableName;
     }
-    
+
     /**
-     * Reads the schema from a file and creates the appropriate tables in the database.
+     * Reads the schema from a file and creates the appropriate tables in the
+     * database.
+     * 
      * @param catalogFile
      */
     public void loadSchema(String catalogFile) {
@@ -100,9 +139,9 @@ public class Catalog {
             BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
 
             while ((line = br.readLine()) != null) {
-                //assume line is of the format name (field type, field type, ...)
+                // assume line is of the format name (field type, field type, ...)
                 String name = line.substring(0, line.indexOf("(")).trim();
-                //System.out.println("TABLE NAME: " + name);
+                // System.out.println("TABLE NAME: " + name);
                 String fields = line.substring(line.indexOf("(") + 1, line.indexOf(")")).trim();
                 String[] els = fields.split(",");
                 ArrayList<String> names = new ArrayList<String>();
@@ -132,16 +171,15 @@ public class Catalog {
                 String[] namesAr = names.toArray(new String[0]);
                 TupleDesc t = new TupleDesc(typeAr, namesAr);
                 HeapFile tabHf = new HeapFile(new File("testfiles/" + name + ".dat"), t);
-                addTable(tabHf,name,primaryKey);
+                addTable(tabHf, name, primaryKey);
                 System.out.println("Added table : " + name + " with schema " + t);
             }
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(0);
         } catch (IndexOutOfBoundsException e) {
-            System.out.println ("Invalid catalog entry : " + line);
+            System.out.println("Invalid catalog entry : " + line);
             System.exit(0);
         }
     }
 }
-
