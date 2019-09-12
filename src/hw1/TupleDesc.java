@@ -89,7 +89,7 @@ public class TupleDesc {
             if (types[i] == Type.INT) {
                 result += 4;
             } else {
-                result += 16;
+                result += 129;
             }
         }
         return result;

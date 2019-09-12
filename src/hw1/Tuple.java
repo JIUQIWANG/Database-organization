@@ -96,6 +96,12 @@ public class Tuple {
 	 */
 	public String toString() {
 		// your code here
-		return "";
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < schema.numFields(); i++) {
+
+			sb.append(getField(i).toString());
+
+		}
+		return sb.toString();
 	}
 }

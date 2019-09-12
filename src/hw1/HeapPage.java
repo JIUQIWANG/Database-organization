@@ -57,14 +57,7 @@ public class HeapPage {
 	public int getNumSlots() {
 		// your code here
 		int tupleSize = td.getSize();
-		int res = 0;
-		for (int i = 1; i <= 2048; i++) {
-			int remain = HeapFile.PAGE_SIZE - i;
-			if (remain / tupleSize <= 4 * i) {
-				res = remain / tupleSize;
-			}
-		}
-		return res;
+		return (8 * HeapFile.PAGE_SIZE) / (8 * tupleSize + 1);
 	}
 
 	/**
@@ -89,8 +82,8 @@ public class HeapPage {
 	 */
 	public boolean slotOccupied(int s) {
 		// your code here
-		int index = s / 4;
-		int offset = s % 4;
+		int index = s / 8;
+		int offset = s % 8;
 		if (((header[index] >> offset) & 1) == 1)
 			return true;
 		else
@@ -105,8 +98,8 @@ public class HeapPage {
 	 */
 	public void setSlotOccupied(int s, boolean value) {
 		// your code here
-		int index = s / 4;
-		int offset = s % 4;
+		int index = s / 8;
+		int offset = s % 8;
 		if (value == true) {
 			header[index] = (byte) (header[index] | (1 << offset));
 		} else {
@@ -124,12 +117,22 @@ public class HeapPage {
 	 */
 	public void addTuple(Tuple t) throws Exception {
 		// your code here
-		if (tuples.length == numSlots) {
+		int insertIndex = 0;
+		int flag = 0;
+		while (insertIndex < tuples.length) {
+			if (!slotOccupied(insertIndex)) {
+				flag = 1;
+				break;
+			}
+			insertIndex++;
+		}
+		if (flag == 0) {
 			throw new IllegalStateException();
 		}
-		if (tuples.length > 0 && t.getDesc().equals(tuples[0].getDesc()))
+		if (!t.getDesc().equals(td))
 			throw new IllegalStateException();
-		int nextIndex = tuples.length;
+
+		int nextIndex = insertIndex;
 		tuples[nextIndex] = t;
 		setSlotOccupied(nextIndex, true);
 	}
@@ -277,8 +280,9 @@ public class HeapPage {
 	public Iterator<Tuple> iterator() {
 		// your code here
 		List<Tuple> lp = new ArrayList<>();
-		for (Tuple va : tuples) {
-			lp.add(va);
+		for (int i = 0; i < numSlots; i++) {
+			if (slotOccupied(i))
+				lp.add(tuples[i]);
 		}
 		return lp.iterator();
 	}
