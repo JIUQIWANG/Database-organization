@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.*;
 
 public class HeapPage {
 
@@ -143,11 +144,11 @@ public class HeapPage {
 	 */
 	public void deleteTuple(Tuple t) throws Exception {
 		// your code here
-		if(id!=t.getPid())
-		{
+		if (id != t.getPid()) {
 			throw new IllegalStateException();
 		}
-		for(int i=0)
+		tuples[t.getId()] = null;
+		setSlotOccupied(t.getId(), false);
 	}
 
 	/**
@@ -275,6 +276,10 @@ public class HeapPage {
 	 */
 	public Iterator<Tuple> iterator() {
 		// your code here
-		return null;
+		List<Tuple> lp = new ArrayList<>();
+		for (Tuple va : tuples) {
+			lp.add(va);
+		}
+		return lp.iterator();
 	}
 }
