@@ -50,7 +50,12 @@ public class YourHW2Tests {
 	}
 	
 	@Test
-	public void test() {
+	public void testJoin() {
+		fail("Not yet implemented");
+	}
+	
+	@Test
+	public void testRename() {
 		fail("Not yet implemented");
 	}
 

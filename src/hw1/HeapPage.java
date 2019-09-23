@@ -68,10 +68,10 @@ public class HeapPage {
 	 */
 	private int getHeaderSize() {
 		// your code here
-		if (numSlots % 4 == 0)
-			return numSlots / 4;
+		if (numSlots % 8 == 0)
+			return numSlots / 8;
 		else
-			return numSlots / 4 + 1;
+			return numSlots / 8 + 1;
 	}
 
 	/**
