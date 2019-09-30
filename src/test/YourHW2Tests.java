@@ -54,15 +54,6 @@ public class YourHW2Tests {
 	}
 
 	@Test
-<<<<<<< HEAD
-	public void testJoin() {
-		fail("Not yet implemented");
-	}
-	
-	@Test
-	public void testRename() {
-		fail("Not yet implemented");
-=======
 	public void testDifferentTypesJoin() {
 		Relation tr = new Relation(testhf.getAllTuples(), testtd);
 		Relation ar = new Relation(ahf.getAllTuples(), atd);
@@ -84,7 +75,6 @@ public class YourHW2Tests {
 		ar = ar.rename(f, n);
 		assertTrue("Rename should not remove any tuples", ar.getTuples().size() == 8);
 		assertTrue("Rename should not go through", ar.getDesc().getFieldName(0).equals("a1"));
->>>>>>> b42f7b67260f5695b6a278091c845c62bf1f981d
 	}
 
 }

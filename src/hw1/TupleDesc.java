@@ -21,7 +21,6 @@ public class TupleDesc {
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
         // your code here
-    	// WORKINDEAD
     	if (typeAr.length != fieldAr.length) {
     		return;
     	}
