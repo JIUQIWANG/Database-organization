@@ -63,9 +63,10 @@ public class Query {
 			afterJoin = relationList.get(0);
 		} else {
 			for (int i = 0; i < joinList.size(); i++) {
-				String[] cols = joinList.get(i).getOnExpression().toString().split("=");
-				String first = cols[0].split("\\.")[1].trim();
-				String second = cols[1].split("\\.")[1].trim();
+				String joinText = joinList.get(i).getOnExpression().toString();
+				String[] columns = joinText.split("=");
+				String first = columns[0].split("\\.")[1].trim();
+				String second = columns[1].split("\\.")[1].trim();
 				int firstArgument = 0;
 				int secondArgument = 0;
 				try {
