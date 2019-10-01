@@ -90,6 +90,7 @@ public class Relation {
 		for (int i = 0; i < names.size(); i++) {
 			if (existName.contains(names.get(i))) {
 				this.td.getType(Integer.MAX_VALUE);
+				// TODO: handled
 			}
 		}
 
@@ -107,6 +108,10 @@ public class Relation {
 
 	}
 
+	public void throwIlledgal() throws IllegalArgumentException {
+		throw new IllegalArgumentException();
+	}
+
 	/**
 	 * This method performs a project operation on a relation
 	 * 
@@ -121,6 +126,14 @@ public class Relation {
 		 */
 
 		ArrayList<Tuple> res = new ArrayList<Tuple>();
+		for (int i = 0; i < fields.size(); i++) {
+			try {
+				this.td.getType(fields.get(i));
+			} catch (Exception e) {
+				throwIlledgal();
+			}
+
+		}
 		Type[] types = new Type[fields.size()];
 		String[] curNames = new String[fields.size()];
 		if (fields.size() == 0) {
@@ -238,7 +251,7 @@ public class Relation {
 		// your code here
 		String res = this.td.toString();
 		for (Tuple tp : this.tuples) {
-			res += tp.toString();
+			res += tp.toString() + ",";
 		}
 		return res;
 	}
