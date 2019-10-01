@@ -126,7 +126,7 @@ public class HW2Tests {
 	}
 	
 	@Test
-	public void testRenameR() {
+	public void testRenameR() throws Exception {
 		Relation ar = new Relation(ahf.getAllTuples(), atd);
 		
 		ArrayList<Integer> f = new ArrayList<Integer>();
@@ -145,7 +145,7 @@ public class HW2Tests {
 	}
 	
 	@Test
-	public void testRenameNullR() {
+	public void testRenameNullR() throws Exception {
 		Relation ar = new Relation(ahf.getAllTuples(), atd);
 		
 		ArrayList<Integer> f = new ArrayList<Integer>();
