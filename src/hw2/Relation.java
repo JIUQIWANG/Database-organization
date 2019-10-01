@@ -69,7 +69,7 @@ public class Relation {
 	 *               the order of field numbers in the field list
 	 * @return
 	 */
-	public Relation rename(ArrayList<Integer> fields, ArrayList<String> names) throws Exception {
+	public Relation rename(ArrayList<Integer> fields, ArrayList<String> names) {
 		// your code here
 		/**
 		 * Implement rename
@@ -89,7 +89,7 @@ public class Relation {
 
 		for (int i = 0; i < names.size(); i++) {
 			if (existName.contains(names.get(i))) {
-				throw new UnexpectedException("colume name exist");
+				this.td.getType(Integer.MAX_VALUE);
 			}
 		}
 
@@ -123,7 +123,9 @@ public class Relation {
 		ArrayList<Tuple> res = new ArrayList<Tuple>();
 		Type[] types = new Type[fields.size()];
 		String[] curNames = new String[fields.size()];
-
+		if (fields.size() == 0) {
+			return new Relation(res, new TupleDesc(types, curNames));
+		}
 		// update schema
 		for (int i = 0; i < fields.size(); i++) {
 			types[i] = this.td.getType(fields.get(i));
