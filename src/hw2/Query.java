@@ -11,6 +11,7 @@ import hw1.Catalog;
 import hw1.Field;
 
 import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.parser.*;
@@ -22,6 +23,7 @@ import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectBody;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import net.sf.jsqlparser.util.TablesNamesFinder;
 
@@ -99,6 +101,9 @@ public class Query {
 		ColumnVisitor visitor = new ColumnVisitor();
 		List<Expression> groupBy = sb.getGroupByColumnReferences();
 		ArrayList<Integer> cols = new ArrayList<>();
+		ArrayList<Integer> renameFields = new ArrayList<>(); // store field ids that should be renamed
+		ArrayList<String> renameNames = new ArrayList<>(); 	// store new names
+	
 		AggregateOperator op;
 		int aggregateFlag = 0;
 		for (SelectItem item : selectItem) {
@@ -110,16 +115,34 @@ public class Query {
 					aggregateFlag = 1;
 					continue;
 				}
-				cols.add(afterJoin.getDesc().nameToId(visitor.getColumn()));
+				int coId = afterJoin.getDesc().nameToId(visitor.getColumn());
+				cols.add(coId);
 				afterJoin = afterJoin.project(cols).aggregate(op, groupBy != null);
 				aggregateFlag = 1;
+				
+				// Record rename field and its new name
+				Alias alias = ((SelectExpressionItem)item).getAlias();
+				if(alias != null && alias.isUseAs()) {
+					renameFields.add(coId);
+					renameNames.add(alias.getName());
+				}
 				continue;
 			}
 			if (visitor.getColumn().equals("*")) {
 				return afterJoin;
 			}
 			String coName = visitor.getColumn();
-			cols.add(afterJoin.getDesc().nameToId(coName));
+			int coId = afterJoin.getDesc().nameToId(coName);
+			cols.add(coId);
+			Alias alias = ((SelectExpressionItem)item).getAlias();
+			if(alias != null && alias.isUseAs()) {
+				renameFields.add(coId);
+				renameNames.add(alias.getName());
+			}
+		}
+		//>>> 5. Rename
+		if(!renameFields.isEmpty()) {
+			afterJoin = afterJoin.rename(renameFields, renameNames);
 		}
 		if (aggregateFlag == 0)
 			return afterJoin.project(cols);
