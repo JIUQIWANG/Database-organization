@@ -140,7 +140,7 @@ public class Query {
 				renameNames.add(alias.getName());
 			}
 		}
-		//>>> 5. Rename
+		//Rename
 		if(!renameFields.isEmpty()) {
 			afterJoin = afterJoin.rename(renameFields, renameNames);
 		}
