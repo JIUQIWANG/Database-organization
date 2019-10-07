@@ -170,55 +170,55 @@ public class BPlusTreeTest {
 		bt.insert(new Entry(new IntField(10), 0));
 		
 		//verify root properties
-				Node root = bt.getRoot();
+		Node root = bt.getRoot();
 
-				assertTrue(root.isLeafNode() == false);
+		assertTrue(root.isLeafNode() == false);
 
-				InnerNode in = (InnerNode)root;
+		InnerNode in = (InnerNode)root;
 
-				ArrayList<Field> k = in.getKeys();
-				ArrayList<Node> c = in.getChildren();
+		ArrayList<Field> k = in.getKeys();
+		ArrayList<Node> c = in.getChildren();
 
-				assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(2)));
-				assertTrue(k.get(1).compare(RelationalOperator.EQ, new IntField(4)));
-				assertTrue(k.get(2).compare(RelationalOperator.EQ, new IntField(7)));
+		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(2)));
+		assertTrue(k.get(1).compare(RelationalOperator.EQ, new IntField(4)));
+		assertTrue(k.get(2).compare(RelationalOperator.EQ, new IntField(7)));
 
-				//grab left and right children from root
-				LeafNode c0 = (LeafNode)c.get(0);
-				LeafNode c1 = (LeafNode)c.get(1);
-				LeafNode c2 = (LeafNode)c.get(2);
-				LeafNode c3 = (LeafNode)c.get(3);
-				assertTrue(c0.isLeafNode() == true);
-				assertTrue(c1.isLeafNode() == true);
-				assertTrue(c2.isLeafNode() == true);
-				assertTrue(c3.isLeafNode() == true);
+		//grab left and right children from root
+		LeafNode c0 = (LeafNode)c.get(0);
+		LeafNode c1 = (LeafNode)c.get(1);
+		LeafNode c2 = (LeafNode)c.get(2);
+		LeafNode c3 = (LeafNode)c.get(3);
+		assertTrue(c0.isLeafNode() == true);
+		assertTrue(c1.isLeafNode() == true);
+		assertTrue(c2.isLeafNode() == true);
+		assertTrue(c3.isLeafNode() == true);
 
-				
+		
 
-				//check values in left node
-				ArrayList<Entry> c0entries = c0.getEntries();
+		//check values in left node
+		ArrayList<Entry> c0entries = c0.getEntries();
 
-				assertTrue(c0entries.get(0).getField().equals(new IntField(1)));
-				assertTrue(c0entries.get(1).getField().equals(new IntField(2)));
+		assertTrue(c0entries.get(0).getField().equals(new IntField(1)));
+		assertTrue(c0entries.get(1).getField().equals(new IntField(2)));
 
-				//check values in second node
-				ArrayList<Entry> c1entries = c1.getEntries();
+		//check values in second node
+		ArrayList<Entry> c1entries = c1.getEntries();
 
-				assertTrue(c1entries.get(0).getField().equals(new IntField(3)));
-				assertTrue(c1entries.get(1).getField().equals(new IntField(4)));
-				
-				//check values in third node
-				ArrayList<Entry> c2entries = c2.getEntries();
+		assertTrue(c1entries.get(0).getField().equals(new IntField(3)));
+		assertTrue(c1entries.get(1).getField().equals(new IntField(4)));
+		
+		//check values in third node
+		ArrayList<Entry> c2entries = c2.getEntries();
 
-				assertTrue(c2entries.get(0).getField().equals(new IntField(6)));
-				assertTrue(c2entries.get(1).getField().equals(new IntField(7)));
-				
-				//check values in right most node
-				ArrayList<Entry> c3entries = c3.getEntries();
+		assertTrue(c2entries.get(0).getField().equals(new IntField(6)));
+		assertTrue(c2entries.get(1).getField().equals(new IntField(7)));
+		
+		//check values in right most node
+		ArrayList<Entry> c3entries = c3.getEntries();
 
-				assertTrue(c3entries.get(0).getField().equals(new IntField(9)));
-				assertTrue(c3entries.get(1).getField().equals(new IntField(10)));
-				assertTrue(c3entries.get(2).getField().equals(new IntField(12)));
+		assertTrue(c3entries.get(0).getField().equals(new IntField(9)));
+		assertTrue(c3entries.get(1).getField().equals(new IntField(10)));
+		assertTrue(c3entries.get(2).getField().equals(new IntField(12)));
 
 
 
