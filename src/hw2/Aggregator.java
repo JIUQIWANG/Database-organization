@@ -2,11 +2,10 @@ package hw2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import hw1.Tuple;
 import hw1.TupleDesc;
-
+import hw1.Type;
 import hw1.Field;
 import hw1.IntField;
 import hw1.StringField;
@@ -77,9 +76,8 @@ public class Aggregator {
   map.forEach( (k,v) -> {
    
    // we only have Int or String type
-   if(v.get(0).getClass()==StringField.class) {
-    String str;
-    str = this.o== AggregateOperator.MAX || this.o == AggregateOperator.MIN ? ((StringField) (v.get(0))).getValue(): null;
+   if(v.get(0).getType()==Type.STRING) {
+    String str = this.o== AggregateOperator.MAX || this.o == AggregateOperator.MIN ? ((StringField) (v.get(0))).getValue() : null;
     
     int cnt = 0; // the number of record within a group
     
@@ -107,7 +105,6 @@ public class Aggregator {
     Field newField = this.o==AggregateOperator.COUNT ? new IntField(cnt) : new StringField(str);
     Tuple newTp = new Tuple(this.td);
     
-    
     if(!this.groupBy) {
      newTp.setField(0, newField); // value only
     }else {
@@ -117,9 +114,9 @@ public class Aggregator {
     }
     res.add(newTp);
 
-   }else if(v.get(0).getClass() ==IntField.class) {
+   }else if(v.get(0).getType()==Type.INT) {
     
-    Integer num = this.o== AggregateOperator.MAX || this.o == AggregateOperator.MIN ? ((IntField) (v.get(0))).getValue():0;
+    Integer num = this.o== AggregateOperator.MIN || this.o == AggregateOperator.MAX ? ((IntField) (v.get(0))).getValue() : 0;
 
     for (Field f: v) {
      int curNum = ((IntField) f).getValue();
@@ -144,7 +141,7 @@ public class Aggregator {
      
     } 
     
-    num = this.o==AggregateOperator.AVG? num/v.size():num; 
+    num = this.o==AggregateOperator.AVG ? num/v.size():num; 
     Tuple newTp = new Tuple(this.td);
     
     if(!this.groupBy) {
