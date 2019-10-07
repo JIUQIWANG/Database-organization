@@ -70,12 +70,12 @@ public class YourHW3Tests {
 		bt.insert(new Entry(new IntField(5), 0));
 		bt.insert(new Entry(new IntField(1), 0));
 		bt.insert(new Entry(new IntField(7), 0));
-		bt.insert(new Entry(new IntField(3), 0));
+//		bt.insert(new Entry(new IntField(3), 0));
 		bt.insert(new Entry(new IntField(12), 0));
 		bt.insert(new Entry(new IntField(9), 0));
 		bt.insert(new Entry(new IntField(6), 0));
 
-		bt.delete(new Entry(new IntField(3), 0));
+//		bt.delete(new Entry(new IntField(3), 0));
 		bt.delete(new Entry(new IntField(5), 0));
 		bt.delete(new Entry(new IntField(12), 0));
 		
