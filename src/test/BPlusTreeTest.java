@@ -59,9 +59,7 @@ public class BPlusTreeTest {
 
 		ArrayList<Field> k = in.getKeys();
 		ArrayList<Node> c = in.getChildren();
-
 		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(7)));
-
 		//grab left and right children from root
 		InnerNode l = (InnerNode)c.get(0);
 		InnerNode r = (InnerNode)c.get(1);
@@ -143,7 +141,7 @@ public class BPlusTreeTest {
 		bt.insert(new Entry(new IntField(1), 0));
 		bt.insert(new Entry(new IntField(3), 0));
 		bt.insert(new Entry(new IntField(10), 0));
-
+		
 		//these values should exist
 		assertTrue(bt.search(new IntField(12)) != null);
 		assertTrue(bt.search(new IntField(3)) != null);
@@ -254,9 +252,10 @@ public class BPlusTreeTest {
 
 		ArrayList<Field> k = in.getKeys();
 		ArrayList<Node> c = in.getChildren();
+		
+		System.out.print(k.get(0));
 
-		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(6)));
-
+		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(7)));
 		//grab left and right children from root
 		InnerNode l = (InnerNode)c.get(0);
 		InnerNode r = (InnerNode)c.get(1);
