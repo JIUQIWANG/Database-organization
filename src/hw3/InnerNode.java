@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 
 import hw1.Field;
+import hw1.IntField;
 import hw1.RelationalOperator;
 
 public class InnerNode implements Node {
@@ -15,7 +16,6 @@ public class InnerNode implements Node {
 	public InnerNode(int degree) {
 		//your code here
 		this.degree = degree; // max num of children
-//		this.isRoot = false;
 		
 		keys = new ArrayList<>();
 		children = new ArrayList<>();
@@ -52,17 +52,21 @@ public class InnerNode implements Node {
 		this.keys.add(f);
 	}
 	
+	public void removeKey(Field f) {
+		this.keys.remove(f);
+	}
+	
 	public void removeChild(Node node) {
 		this.children.remove(this.children.indexOf(node));
 		this.updateKeys();
 	}
 	
 	public boolean isFull() {
-		return !(this.keys.size()<=this.degree);
+		return !(this.keys.size()<this.degree);
 	}
 	public int overHalf() {
 		int mid = (this.degree%2==0) ? (this.degree/2) : (this.degree/2+1);
-		int len = this.keys.size();
+		int len = this.keys.size()-1;
 		
 		if (len<mid) {
 			return -1;
@@ -72,32 +76,10 @@ public class InnerNode implements Node {
 			return 1;
 		}
 	}
-	public boolean belowHalfSize() {
-		int mid = (this.degree%2==0) ? (this.degree/2) : (this.degree/2+1);
-
-		return !(this.keys.size()>=mid);
-	}
-//	public Capacity checkCapacity() {
-//		int halfSize = (int)Math.ceil(degree/2.0);
-//		int currentSize = keys.size();
-//		
-//		if(currentSize < halfSize) {
-//			return Capacity.UNDER_HALF;
-//		}else if(currentSize == halfSize) {
-//			return Capacity.HALF;
-//		}else if(currentSize <= degree) {
-//			return Capacity.ABOVE_HALF;
-//		}else {
-//			return Capacity.OVERSIZE;
-//		}
-//	}
-
-//	public void setRoot(boolean isRoot) {
-//		this.isRoot = isRoot;
-//	}
-//	
-//	public boolean isRoot() {
-//		return this.isRoot;
+//	public boolean belowHalfSize() {
+//		int mid = (this.degree%2==0) ? (this.degree/2) : (this.degree/2+1);
+//
+//		return !(this.keys.size()>=mid);
 //	}
 	
 	public Field getKey() {
@@ -120,7 +102,8 @@ public class InnerNode implements Node {
 		ArrayList<Field> newKeys = new ArrayList<>();
 		
 		for (int i=0; i<this.children.size()-1; i++) {
-			newKeys.add(this.children.get(i).getKey());
+			Field newKey = this.children.get(i).getKey();
+			newKeys.add(newKey);
 		}
 		
 		this.keys = newKeys;
