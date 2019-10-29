@@ -762,7 +762,7 @@ public class HW3Tests {
 
 		LeafNode l = (LeafNode) bt.getRoot();
 
-		assertTrue(l.getEntries().get(0).getField().equals(new StringField("database")));
+		assertTrue(l.getEntries().get(ß0).getField().equals(new StringField("database")));
 		assertTrue(l.getEntries().get(1).getField().equals(new StringField("test")));
 
 		assertTrue(l.getEntries().get(0).getPage() == 1);

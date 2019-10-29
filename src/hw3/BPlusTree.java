@@ -1,7 +1,7 @@
 package hw3;
 
-import java.lang.annotation.Target;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Stack;
 
 import hw1.Field;
 
@@ -11,14 +11,19 @@ public class BPlusTree {
 
 	private Node root;
 
+	private boolean op; // borrowed or merged
+	boolean isBalanced = false;
+
 	public BPlusTree(int pInner, int pLeaf) {
 		// your code here
 		this.pInner = pInner;
 		this.pLeaf = pLeaf;
 		this.root = new LeafNode(pLeaf); // init to a leaf node
 
+		this.op = false;
 	}
 
+	// >>> search
 	public LeafNode search(Field f) {
 		// your code here
 		return tree_search(this.root, f);
@@ -35,18 +40,17 @@ public class BPlusTree {
 
 	}
 
+	// >>> search FINISH
+
+	// >>> insert
 	public void insert(Entry e) {
 		// your code here
 
 		tree_insert(this.root, e);
 
 		// if the root needs to be split
-		if (this.root.isFull()) {
+		if (this.root.isFull())
 			splitHelper(this.root, null);
-		}
-		if (!this.root.isLeafNode()) {
-			System.out.println(((InnerNode) this.root).getKeys().toString());
-		}
 
 	}
 
@@ -66,6 +70,7 @@ public class BPlusTree {
 			// split
 			if (child.isFull())
 				splitHelper(child, in);
+
 			// update keys
 			in.updateKeys();
 		}
@@ -77,132 +82,193 @@ public class BPlusTree {
 		Node newNode = node.isLeafNode() ? ((LeafNode) node).split() : ((InnerNode) node).split();
 
 		if (parent == null) {
-
 			InnerNode in = new InnerNode(this.pInner);
 			in.addChild(node);
 			in.addChild(newNode);
-			node.setParent(in);
-			newNode.setParent(in);
+
 			this.root = in;
 
-		} else {
-			parent.addChild(newNode);
-			newNode.setParent(parent);
+			return;
 		}
 
-	}
+		parent.addChild(newNode);
 
+	}
+	// >>> insert FINISH
+
+	// >>> delete
 	public void delete(Entry e) {
-		if (root.isLeafNode()) {
-			LeafNode rootL = (LeafNode) this.root;
-			if (rootL.containsKey(e.getField())) {
-				rootL.removeEntry(e);
-				if (rootL.getEntries().size() == 0) {
-					this.root = null;
-				}
-			}
+		LeafNode searchNode = this.search(e.getField());
+
+		if (searchNode == null) {
 			return;
 		}
-		LeafNode targetNode = search(e.getField());
-		if (targetNode == null) {
-			return;
-		}
-		if (targetNode.overHalf() == 1) {
-			targetNode.removeEntry(e);
+		Stack<Node> st = new Stack<>(); // FILO: store path
+		st.push(this.root);
+
+		tree_delete(st, e);
+
+	}
+
+	private void tree_delete(Stack<Node> st, Entry e) {
+
+		Node node = st.peek();
+
+		if (node.isLeafNode()) {
+			((LeafNode) node).removeEntry(e);
 		} else {
-			targetNode.removeEntry(e);
-			InnerNode parent = targetNode.getParent();
-			Node leftAttempt = parent.getLeftSibling(targetNode);
-			if (leftAttempt != null) {
-				if (leftAttempt.overHalf() == 1) {
-					LeafNode leftLeaf = (LeafNode) leftAttempt;
-					targetNode.addEntry(leftLeaf.getLastEntry());
-					leftLeaf.removeEntry(leftLeaf.getLastEntry());
-					parent.updateKeys();
-					return;
-				}
-			}
-			Node rightAttemp = parent.getRightSibling(targetNode);
-			if (rightAttemp != null) {
-				if (rightAttemp.overHalf() == 1) {
-					System.out.println(((LeafNode) rightAttemp).getParent().getKeys().toString());
-					LeafNode rightLeaf = (LeafNode) rightAttemp;
-					targetNode.addEntry(rightLeaf.getLastEntry());
-					rightLeaf.removeEntry(rightLeaf.getLastEntry());
-					parent.updateKeys();
-					return;
-				}
-			}
-			if (leftAttempt != null) {
+			Node child = ((InnerNode) node).getChild(e.getField());
+			st.push(child);
+			tree_delete(st, e);
+		}
 
-				LeafNode leftLeaf = (LeafNode) leftAttempt;
-				for (Entry var : targetNode.getEntries()) {
-					leftLeaf.addEntry(var);
-				}
-				parent.removeChild(targetNode);
-				parent.updateKeys();
-				if (parent.getKeys().size() == 0 && this.root == parent) {
-					this.root = leftLeaf;
-					return;
-				}
-				while (parent != null) {
-					mergeWithSibling(parent);
-					parent = parent.getParent();
-				}
-				return;
-			}
-			if (rightAttemp != null) {
-				LeafNode rightLeaf = (LeafNode) rightAttemp;
-				for (Entry var : rightLeaf.getEntries()) {
-					targetNode.addEntry(var);
-				}
-				parent.removeChild(rightLeaf);
-				parent.updateKeys();
-				if (parent.getKeys().size() == 0 && this.root == parent) {
-					this.root = rightLeaf;
-					return;
-				}
-				while (parent != null) {
-					mergeWithSibling(parent);
-					parent = parent.getParent();
-				}
-				return;
-			}
+		handleBalance(st);
 
+		st.pop();
+
+		if (this.op) {
+			if (st.size() > 0) {
+				InnerNode parent = (InnerNode) st.peek();
+				parent.updateKeys();
+			}
 		}
 	}
 
-	public void mergeWithSibling(InnerNode targetNode) {
-		if (targetNode == this.root) {
-			return;
-		}
-		InnerNode parent = targetNode.getParent();
-		Node leftAttempt = parent.getLeftSibling(targetNode);
-		if (leftAttempt != null) {
-			if (leftAttempt.overHalf() == -1) {
-				InnerNode leftLeaf = (InnerNode) leftAttempt;
-				for (Node var : targetNode.getChildren())
-					leftLeaf.addChild(var);
-				leftLeaf.updateKeys();
-				parent.removeChild(targetNode);
-				parent.updateKeys();
+	private void handleBalance(Stack<Node> st) {
+
+		// current node
+		Node node = st.peek();
+
+		if (this.root == node) {
+			if (node.isLeafNode()) {
+				// corner case: delete root
+				if (((LeafNode) this.root).getEntries().size() < 1)
+					this.root = null;
+				return;
+			} else {
+				InnerNode in = (InnerNode) this.root;
+				if (in.getChildren().size() <= 1)
+					this.root = in.getFirstChild();
 				return;
 			}
+
 		}
-		Node rightAttemp = parent.getRightSibling(targetNode);
-		if (rightAttemp != null) {
-			if (rightAttemp.overHalf() == -1) {
-				InnerNode rightLeaf = (InnerNode) rightAttemp;
-				for (Node var : rightLeaf.getChildren())
-					targetNode.addChild(var);
-				rightLeaf.updateKeys();
-				parent.removeChild(rightLeaf);
-				parent.updateKeys();
-				return;
+
+		// we don't need to handle if it is overHalf
+		if (node.overHalf() < 0) {
+			this.op = true;
+			st.pop();
+
+			// get the parent node
+			InnerNode parent = (InnerNode) st.peek();
+			st.push(node);
+			// node with the same parent
+			Node sibling = this.getLeftSibling(st); // left priority
+			sibling = sibling == null ? this.getRightSibling(st) : sibling;
+
+			if (sibling.isLeafNode()) { // handle
+				// borrow
+				if (sibling.overHalf() > 0) {
+					Entry entryFromLeft = ((LeafNode) sibling).getLastEntry();
+					((LeafNode) node).addEntry(entryFromLeft);
+					((LeafNode) sibling).removeEntry(entryFromLeft);
+
+				} else { // merge
+					ArrayList<Entry> entries = ((LeafNode) node).getEntries();
+
+					for (Entry entry : entries) {
+						((LeafNode) sibling).addEntry(entry);
+					}
+
+					parent.removeChild(node);
+				}
+			} else { // handle inner node
+				// borrow
+				if (sibling.overHalf() > 0) {
+					Node nodeFromLeft = ((InnerNode) sibling).getLastChild();
+					((InnerNode) node).addChild(nodeFromLeft);
+					((InnerNode) sibling).removeChild(nodeFromLeft);
+
+				} else { // merge
+					ArrayList<Node> children = ((InnerNode) node).getChildren();
+
+					for (Node child : children) {
+						((InnerNode) sibling).addChild(child);
+					}
+
+					parent.removeChild(node);
+				}
 			}
+
+		} else {
+			this.op = false;
 		}
-		return;
+
 	}
+
+	private Node getLeftSibling(Stack<Node> st) {
+		@SuppressWarnings("unchecked")
+		Stack<Node> path = (Stack<Node>) st.clone();
+		Node child = null, sibling = null, temp = null;
+		InnerNode parent = null;
+
+		int steps = 0; // represent the steps go up from the curNode
+		while (path.size() > 1) {
+			child = path.pop();
+			parent = (InnerNode) path.peek();
+			sibling = parent.getLeftSibling(child); // InnerNode method
+			if (sibling != null) {
+				temp = sibling;
+				break;
+			}
+
+			steps++; // go up
+		}
+
+		if (temp == null) { // Cannot find the left sibling
+			return null;
+		}
+
+		sibling = temp;
+		for (int i = 0; i < steps; i++) {
+			sibling = ((InnerNode) sibling).getLastChild();
+		}
+
+		return sibling;
+	}
+
+	private Node getRightSibling(Stack<Node> st) {
+		@SuppressWarnings("unchecked")
+		Stack<Node> path = (Stack<Node>) st.clone();
+		Node child = null, sibling = null, temp = null;
+		InnerNode parent = null;
+
+		int steps = 0; // represent the steps go up from the curNode
+		while (path.size() > 1) {
+			child = path.pop();
+			parent = (InnerNode) path.peek();
+			sibling = parent.getRightSibling(child); // InnerNode method
+			if (sibling != null) {
+				temp = sibling;
+				break;
+			}
+
+			steps++; // go up
+		}
+
+		if (temp == null) { // Cannot find the left sibling
+			return null;
+		}
+
+		sibling = temp;
+		for (int i = 0; i < steps; i++) {
+			sibling = ((InnerNode) sibling).getFirstChild();
+		}
+
+		return sibling;
+	}
+
+	// >>> delete FINISH
 
 	public Node getRoot() {
 		return this.root;
