@@ -77,7 +77,7 @@ public class LeafNode implements Node {
 		for (int i = 0; i < this.entries.size(); i++) {
 			if (this.entries.get(i).getField().compare(RelationalOperator.EQ, e.getField()))
 				return;
-			if (this.entries.get(i).getField().compare(RelationalOperator.GT, e.getField())) {
+			else if (this.entries.get(i).getField().compare(RelationalOperator.GT, e.getField())) {
 				this.entries.add(i, e);
 				return;
 			}

@@ -100,25 +100,28 @@ public class BPlusTree {
 	// >>> delete
 	public void delete(Entry e) {
 		ArrayList<Field> oldKeys =  this.root.getKeys();
-		if (root.isLeafNode()) {
-			LeafNode rootL = (LeafNode) this.root;
-			if (rootL.containsKey(e.getField())) {
-				rootL.removeEntry(e);
-				if (rootL.getEntries().size() == 0) {
+		
+		// corner case: delete root
+		if (this.root.isLeafNode()) {
+			LeafNode in = (LeafNode) this.root;
+			if (in.containsKey(e.getField())) {
+				in.removeEntry(e);
+				if (in.getEntries().size() == 0) {
 					this.root = null;
 				}
 			}
 			return;
 		}
 		LeafNode searchNode = this.search(e.getField());
-
+		
+		// corner case: delete non-exist node
 		if (searchNode == null) {
 			return;
 		}
-		if (searchNode.overHalf() > 0) {
-			searchNode.removeEntry(e);
-			return;
-		}
+//		if (searchNode.overHalf() > 0) {
+//			searchNode.removeEntry(e);
+//			return;
+//		}
 		Stack<Node> st = new Stack<>(); // FILO: store path
 		st.push(this.root);
 		treeDelete(st, e);
@@ -127,7 +130,7 @@ public class BPlusTree {
 			splitHelper(this.root, null);
 		}
 		
-		ArrayList<Field> newKeys =  this.root.getKeys();
+		ArrayList<Field> newKeys =  this.root.getKeys(); 
 
 		// update keys unless it breaks the rule: left < right for bplustree
 		if (this.op && !this.root.isLeafNode() && newKeys.size() == oldKeys.size()) {
@@ -160,12 +163,12 @@ public class BPlusTree {
 		handleBalance(st);
 		st.pop();
 
-		if (this.op) {
-			if (!this.root.isLeafNode()) {
-				InnerNode parent = (InnerNode) this.root;
-				parent.updateKeys(); //always remember to update keys
-				
-			}
+		if (this.op && !this.root.isLeafNode()) {
+			
+			InnerNode parent = (InnerNode) this.root;
+			parent.updateKeys(); //always remember to update keys
+			
+			
 		}
 	}
 
