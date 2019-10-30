@@ -52,9 +52,11 @@ public class BufferPool {
     public HeapPage getPage(int tid, int tableId, int pid, Permissions perm)
         throws Exception {
         // your code here
-    	// structure to track the locks: read/write locks are different
-    	// only one write but multiple read
-    	
+    	/**two cases:
+    	 * structure to track the locks: read/write locks are different
+    	 * only one write but multiple read
+    	 */
+
         return null;
     }
 

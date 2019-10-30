@@ -54,10 +54,10 @@ public class TransactionTest {
 	@Test
 	public void testReleaseLocks() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
-	    bp.getPage(0, tid, 0, Permissions.READ_WRITE);
-	    bp.transactionComplete(0, true);
+	    bp.getPage(0, tid, 0, Permissions.READ_WRITE); // we can convert this
+	    bp.transactionComplete(0, true); // complete successfully: txn over, locks released
 
-	    bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+	    bp.getPage(1, tid, 0, Permissions.READ_WRITE); // dead lock shouldn't happen here
 	    bp.getPage(1, tid, 0, Permissions.READ_WRITE);
 		bp.transactionComplete(0, true);
 	    assertTrue(true); //will only reach this point if locks are properly released
