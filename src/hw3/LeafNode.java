@@ -9,17 +9,11 @@ public class LeafNode implements Node {
 	private int degree;
 	private ArrayList<Entry> entries;
 	private InnerNode parent;
-	// implement leaf nodes as a linked list for convenient implement
-	private LeafNode prev;
-	private LeafNode next;
 
 	public LeafNode(int degree) {
 		// your code here
 		this.degree = degree;
 		entries = new ArrayList<>();
-
-		this.prev = null;
-		this.next = null;
 
 	}
 

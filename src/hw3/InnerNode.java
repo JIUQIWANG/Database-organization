@@ -11,7 +11,6 @@ public class InnerNode implements Node {
 	private int degree;
 	private ArrayList<Field> keys;
 	private ArrayList<Node> children;
-	private InnerNode parent;
 
 	public InnerNode(int degree) {
 		// your code here

@@ -32,6 +32,7 @@ public class BufferPool {
         // your code here
     }
 
+    // TODO: VERY IMPORTANT METHOD: first enter thing that a transaction needs to do
     /**
      * Retrieve the specified page with the associated permissions.
      * Will acquire a lock and may block if that lock is held by another
@@ -46,11 +47,14 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the page
      * @param tableId the ID of the table with the requested page
      * @param pid the ID of the requested page
-     * @param perm the requested permissions on the page
+     * @param perm the requested permissions on the page: read/write
      */
     public HeapPage getPage(int tid, int tableId, int pid, Permissions perm)
         throws Exception {
         // your code here
+    	// structure to track the locks: read/write locks are different
+    	// only one write but multiple read
+    	
         return null;
     }
 
@@ -66,6 +70,7 @@ public class BufferPool {
      */
     public  void releasePage(int tid, int tableId, int pid) {
         // your code here
+    	// remove any lock: only happend when a transaction is complete (txnComplete method)
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -84,6 +89,12 @@ public class BufferPool {
     public   void transactionComplete(int tid, boolean commit)
         throws IOException {
         // your code here
+    	/**two cases:
+    	 * error: undo any change (how I can track the change: not write the data on disk)
+    	 * succeed
+    	 */
+
+  
     }
 
     /**
@@ -118,16 +129,19 @@ public class BufferPool {
         // your code here
     }
 
-    private synchronized  void flushPage(int tableId, int pid) throws IOException {
-        // your code here
-    }
-
     /**
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized  void evictPage() throws Exception {
+    private synchronized  void flushPage(int tableId, int pid) throws IOException {
         // your code here
+    }
+
+     private synchronized  void evictPage() throws Exception {
+        // your code here
+    	// what if the buffer page is full: try to find a page just push it out ( not currently being operated)
+    
+    
     }
 
 }
