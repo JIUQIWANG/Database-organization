@@ -235,6 +235,7 @@ public class HW3Tests {
 		bt.insert(new Entry(new IntField(10), 0));
 
 		bt.delete(new Entry(new IntField(7), 0));
+		System.out.println(1111);
 		bt.delete(new Entry(new IntField(3), 0));
 		bt.delete(new Entry(new IntField(4), 0));
 		bt.delete(new Entry(new IntField(10), 0));
@@ -249,7 +250,8 @@ public class HW3Tests {
 
 		ArrayList<Field> k = in.getKeys();
 		ArrayList<Node> c = in.getChildren();
-
+		System.out.println(((InnerNode) in.getChildren().get(0)).getKeys().toString());
+		System.out.println(in.getKeys().toString());
 		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(7)));
 
 		// grab left and right children from root
@@ -688,6 +690,7 @@ public class HW3Tests {
 		// [1,2] [3,4] [6,7] [9, ]
 		assertTrue(bt.getRoot().isLeafNode() == false);
 		InnerNode root = (InnerNode) bt.getRoot();
+		System.out.println(root.getKeys().toString());
 		assertTrue(root.getKeys().get(0).compare(RelationalOperator.EQ, new IntField(4)));
 
 		ArrayList<Node> root_c = root.getChildren();
@@ -762,7 +765,7 @@ public class HW3Tests {
 
 		LeafNode l = (LeafNode) bt.getRoot();
 
-		assertTrue(l.getEntries().get(ß0).getField().equals(new StringField("database")));
+		assertTrue(l.getEntries().get(0).getField().equals(new StringField("database")));
 		assertTrue(l.getEntries().get(1).getField().equals(new StringField("test")));
 
 		assertTrue(l.getEntries().get(0).getPage() == 1);

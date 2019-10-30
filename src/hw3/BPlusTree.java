@@ -98,15 +98,32 @@ public class BPlusTree {
 
 	// >>> delete
 	public void delete(Entry e) {
+		if (root.isLeafNode()) {
+			LeafNode rootL = (LeafNode) this.root;
+			if (rootL.containsKey(e.getField())) {
+				rootL.removeEntry(e);
+				if (rootL.getEntries().size() == 0) {
+					this.root = null;
+				}
+			}
+			return;
+		}
 		LeafNode searchNode = this.search(e.getField());
 
 		if (searchNode == null) {
+			return;
+		}
+		if (searchNode.overHalf() > 0) {
+			searchNode.removeEntry(e);
 			return;
 		}
 		Stack<Node> st = new Stack<>(); // FILO: store path
 		st.push(this.root);
 
 		tree_delete(st, e);
+		if (this.root.isFull()) {
+			splitHelper(this.root, null);
+		}
 
 	}
 
@@ -153,7 +170,9 @@ public class BPlusTree {
 			}
 
 		}
-
+		// System.out.println(((InnerNode) ((InnerNode)
+		// this.getRoot()).getChildren().get(0)).getKeys().toString());
+		// System.out.println(((InnerNode) this.root).getKeys().toString());
 		// we don't need to handle if it is overHalf
 		if (node.overHalf() < 0) {
 			this.op = true;
@@ -184,6 +203,10 @@ public class BPlusTree {
 				}
 			} else { // handle inner node
 				// borrow
+				// System.out
+				// .println(((InnerNode) ((InnerNode)
+				// this.getRoot()).getChildren().get(0)).getKeys().toString());
+				// System.out.println(((InnerNode) this.root).getKeys().toString());
 				if (sibling.overHalf() > 0) {
 					Node nodeFromLeft = ((InnerNode) sibling).getLastChild();
 					((InnerNode) node).addChild(nodeFromLeft);

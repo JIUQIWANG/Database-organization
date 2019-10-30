@@ -109,8 +109,8 @@ public class InnerNode implements Node {
 
 	public void updateKeys() {
 		ArrayList<Field> newKeys = new ArrayList<>();
-		
-		for (int i=0; i<this.children.size()-1; i++) {
+
+		for (int i = 0; i < this.children.size() - 1; i++) {
 			Field newKey = this.children.get(i).getKey();
 			newKeys.add(newKey);
 		}

@@ -57,8 +57,18 @@ public class LeafNode implements Node {
 	public int overHalf() {
 		int mid = (this.degree % 2 == 0) ? (this.degree / 2) : (this.degree / 2 + 1);
 		int len = this.entries.size();
-		System.out.println(len);
-		System.out.println(mid);
+		if (len < mid) {
+			return -1;
+		} else if (len == mid) {
+			return 0;
+		} else {
+			return 1;
+		}
+	}
+
+	public int overHalf(int n) {
+		int mid = (this.degree % 2 == 0) ? (this.degree / 2) : (this.degree / 2 + 1);
+		int len = this.entries.size() + n;
 		if (len < mid) {
 			return -1;
 		} else if (len == mid) {
@@ -163,5 +173,3 @@ public class LeafNode implements Node {
 	}
 
 }
-
- 
