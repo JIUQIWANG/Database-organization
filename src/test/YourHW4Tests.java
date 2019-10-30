@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
@@ -30,50 +31,116 @@ public class YourHW4Tests {
 	private TupleDesc td;
 	private int tid;
 	private int tid2;
-	
+
 	@Before
 	public void setup() {
-		
+
 		try {
-			Files.copy(new File("testfiles/test.dat.bak").toPath(), new File("testfiles/test.dat").toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(new File("testfiles/test.dat.bak").toPath(), new File("testfiles/test.dat").toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			System.out.println("unable to copy files");
 			e.printStackTrace();
 		}
-		
+
 		Database.reset();
 		c = Database.getCatalog();
 		c.loadSchema("testfiles/test.txt");
 		c.loadSchema("testfiles/test2.txt");
-		
+
 		int tableId = c.getTableId("test");
 		td = c.getTupleDesc(tableId);
 		hf = c.getDbFile(tableId);
-		
+
 		Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
 
 		bp = Database.getBufferPool();
-		
-		
+
 		tid = c.getTableId("test");
 		tid2 = c.getTableId("test2");
 	}
+
+	// bufferPool method
+	/*
+	 * 1.transaction hold locks until complete 2.one transaction multiple locks two
+	 * transaction acquire locks combination 3. Evict when pool is full all page is
+	 * using, no eviction candidate
+	 */
+
+	@Test
+	public void testRelease3() throws Exception {
+		// one possible case
+		Tuple t = new Tuple(td);
+		t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
+		byte[] s = new byte[129];
+		s[0] = 2;
+		s[1] = 98;
+		s[2] = 121;
+		t.setField(1, new StringField(s));
+
+		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
+		bp.insertTuple(0, tid, t); // insert the tuple into the page
+		bp.transactionComplete(0, true); // txn should complete
+
+		bp.releasePage(0, tid, 0);
+
+		// remove any key after release
+		assertTrue(bp.holdsLock(0, tid, 0) == false);
+	}
+
+	@Test
+	public void testGetPagesWithExistedWriteLock() throws Exception {
+		// test two transcation acuiqre same page
+		// two transcation both acquire read access
+		// read
+		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
+		bp.getPage(1, tid, 0, Permissions.READ_ONLY);
+		assertTrue(true);
+		assertTrue("should hold read lock", bp.holdsLock(0, tid, 0));
+		assertTrue("should hold read lock", bp.holdsLock(1, tid, 0));
+
+		bp.transactionComplete(0, true);
+		bp.transactionComplete(1, true);
+		assertTrue(true);
+
+		// normal write lock release and get
+		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
+		bp.transactionComplete(0, true);
+		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		bp.transactionComplete(1, true);
+		assertTrue(true);
+
+		// get page with existed write locks
+		try {
+			bp.getPage(0, tid, 0, Permissions.READ_WRITE);
+			assertTrue("should hold lock", bp.holdsLock(0, tid, 0));
+			bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+
+		} catch (Exception e) {
+			assertTrue(true);
+			bp.transactionComplete(0, true);
+			bp.transactionComplete(1, true);
+		}
+		fail("Should have throw an exception");
+
+	}
+
 	@Test
 	public void testReleaseLocks() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
-	    bp.transactionComplete(0, true);
+		bp.transactionComplete(0, true);
 
-	    bp.getPage(1, tid, 0, Permissions.READ_WRITE);
-	    bp.transactionComplete(1, true);
-	    assertTrue(true);
+		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		bp.transactionComplete(1, true);
+		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testEvict() throws Exception {
-		for(int i = 0; i < 50; i++) {
+		for (int i = 0; i < 50; i++) {
 			bp.getPage(0, tid2, i, Permissions.READ_WRITE);
 			Tuple t = new Tuple(td);
-			t.setField(0, new IntField(new byte[] {0, 0, 0, (byte)131}));
+			t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
 			byte[] s = new byte[129];
 			s[0] = 2;
 			s[1] = 98;
@@ -89,10 +156,10 @@ public class YourHW4Tests {
 		fail("Should have thrown an exception");
 
 	}
-	
+
 	@Test
 	public void testEvict2() throws Exception {
-		for(int i = 0; i < 50; i++) {
+		for (int i = 0; i < 50; i++) {
 			bp.getPage(0, tid2, i, Permissions.READ_WRITE);
 		}
 		try {
@@ -103,120 +170,120 @@ public class YourHW4Tests {
 		assertTrue(true);
 
 	}
-	
+
 	@Test
 	public void testReadLocks() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
 		bp.getPage(1, tid, 0, Permissions.READ_ONLY);
-		if(!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
 			fail("Should be able to acquire multiple read locks");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testLockUpgrade() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
-		if(!bp.holdsLock(0, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0)) {
 			fail("Should be able to upgrade locks");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testLockUpgrade2() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
-		if(!bp.holdsLock(0, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0)) {
 			fail("Should be able to upgrade locks");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testFailedLockUpgrade() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
 		bp.getPage(1, tid, 0, Permissions.READ_ONLY);
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
-		if(!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
 			fail("Lock upgrade should have failed");
 		}
-		if(bp.holdsLock(0, tid, 0) && bp.holdsLock(1, tid, 0)) {
+		if (bp.holdsLock(0, tid, 0) && bp.holdsLock(1, tid, 0)) {
 			fail("Lock upgrade should have failed");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testWriteLocks() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
 		try {
-		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
-		} catch(Exception e) {
-			
+			bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		} catch (Exception e) {
+
 		}
-		if(!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
 			fail("Deadlock - should not grant both locks");
 		}
-		
-		if(bp.holdsLock(1, tid, 0)&& bp.holdsLock(0, tid, 0)) {
+
+		if (bp.holdsLock(1, tid, 0) && bp.holdsLock(0, tid, 0)) {
 			fail("Deadlock - one transaction should survive");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testReadThenWrite() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
 		try {
-		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
-		} catch(Exception e) {
-			
+			bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		} catch (Exception e) {
+
 		}
-		if(!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
 			fail("Deadlock - should not grant both locks");
 		}
-		
-		if(bp.holdsLock(1, tid, 0)&& bp.holdsLock(0, tid, 0)) {
+
+		if (bp.holdsLock(1, tid, 0) && bp.holdsLock(0, tid, 0)) {
 			fail("Deadlock - one transaction should survive");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testWriteThenRead() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
 		try {
-		bp.getPage(1, tid, 0, Permissions.READ_ONLY);
-		} catch(Exception e) {
-			
+			bp.getPage(1, tid, 0, Permissions.READ_ONLY);
+		} catch (Exception e) {
+
 		}
-		if(!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
+		if (!bp.holdsLock(0, tid, 0) && !bp.holdsLock(1, tid, 0)) {
 			fail("Deadlock - should not grant both locks");
 		}
-		
-		if(bp.holdsLock(1, tid, 0)&& bp.holdsLock(0, tid, 0)) {
+
+		if (bp.holdsLock(1, tid, 0) && bp.holdsLock(0, tid, 0)) {
 			fail("Deadlock - one transaction should survive");
 		}
 		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testCommit() throws Exception {
 		Tuple t = new Tuple(td);
-		t.setField(0, new IntField(new byte[] {0, 0, 0, (byte)131}));
+		t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
 		byte[] s = new byte[129];
 		s[0] = 2;
 		s[1] = 98;
 		s[2] = 121;
 		t.setField(1, new StringField(s));
-		
-		bp.getPage(0, tid, 0, Permissions.READ_WRITE); //acquire lock for the page
-		bp.insertTuple(0, tid, t); //insert the tuple into the page
-		bp.transactionComplete(0, true); //should flush the modified page
-		
-		//reset the buffer pool, get the page again, make sure data is there
+
+		bp.getPage(0, tid, 0, Permissions.READ_WRITE); // acquire lock for the page
+		bp.insertTuple(0, tid, t); // insert the tuple into the page
+		bp.transactionComplete(0, true); // should flush the modified page
+
+		// reset the buffer pool, get the page again, make sure data is there
 		Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
 		HeapPage hp = bp.getPage(1, tid, 0, Permissions.READ_ONLY);
 		Iterator<Tuple> it = hp.iterator();
@@ -226,22 +293,22 @@ public class YourHW4Tests {
 		it.next();
 		assertFalse(it.hasNext());
 	}
-	
+
 	@Test
 	public void testAbort() throws Exception {
 		Tuple t = new Tuple(td);
-		t.setField(0, new IntField(new byte[] {0, 0, 0, (byte)131}));
+		t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
 		byte[] s = new byte[129];
 		s[0] = 2;
 		s[1] = 98;
 		s[2] = 121;
 		t.setField(1, new StringField(s));
-		
-		bp.getPage(0, tid, 0, Permissions.READ_WRITE); //acquire lock for the page
-		bp.insertTuple(0, tid, t); //insert the tuple into the page
-		bp.transactionComplete(0, false); //should abort, discard changes
-		
-		//reset the buffer pool, get the page again, make sure data is there
+
+		bp.getPage(0, tid, 0, Permissions.READ_WRITE); // acquire lock for the page
+		bp.insertTuple(0, tid, t); // insert the tuple into the page
+		bp.transactionComplete(0, false); // should abort, discard changes
+
+		// reset the buffer pool, get the page again, make sure data is there
 		Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
 		HeapPage hp = bp.getPage(1, tid, 0, Permissions.READ_ONLY);
 		Iterator<Tuple> it = hp.iterator();
@@ -249,65 +316,64 @@ public class YourHW4Tests {
 		it.next();
 		assertFalse(it.hasNext());
 	}
-	
+
 	@Test
 	public void testRelease() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
-	    bp.releasePage(0, tid, 0);
+		bp.releasePage(0, tid, 0);
 
-	    //lock has been released so this should work
-	    bp.getPage(1, tid, 0, Permissions.READ_WRITE);
-	    assertTrue(true);
+		// lock has been released so this should work
+		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testRelease2() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
-	    bp.releasePage(0, tid, 0);
+		bp.releasePage(0, tid, 0);
 
-	    //lock has been released so this should work
-	    bp.getPage(1, tid, 0, Permissions.READ_WRITE);
-	    assertTrue(true);
+		// lock has been released so this should work
+		bp.getPage(1, tid, 0, Permissions.READ_WRITE);
+		assertTrue(true);
 	}
-	
+
 	@Test
 	public void testDuplicateReads() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
 		bp.getPage(0, tid, 0, Permissions.READ_ONLY);
-		
-		//should be ok since it already has the lock
+
+		// should be ok since it already has the lock
 		assertTrue("should hold read lock", bp.holdsLock(0, tid, 0));
 	}
-	
+
 	@Test
 	public void testDuplicateWrites() throws Exception {
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
-		
-		//should be ok since it already has the lock
+
+		// should be ok since it already has the lock
 		assertTrue("should hold write lock", bp.holdsLock(0, tid, 0));
 	}
-	
+
 	@Test
 	public void testhfRemove() throws Exception {
 
 		bp.getPage(0, tid, 0, Permissions.READ_WRITE);
 		Tuple t = new Tuple(td);
-		t.setField(0, new IntField(new byte[] {0, 0, 0, (byte)131}));
+		t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
 		byte[] s = new byte[129];
 		s[0] = 2;
 		s[1] = 98;
 		s[2] = 121;
 		t.setField(1, new StringField(s));
 		bp.deleteTuple(0, tid, t);
-		
+
 		bp.transactionComplete(0, true);
-		
+
 		Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
 		HeapPage hp = bp.getPage(1, tid, 0, Permissions.READ_ONLY);
 		Iterator<Tuple> it = hp.iterator();
 		assertFalse("Deletion failed", it.hasNext());
-
 
 	}
 

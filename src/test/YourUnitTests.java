@@ -30,7 +30,6 @@ public class YourUnitTests {
 	private BufferPool bp;
 	private int tableId;
 
-
 	@Before
 	public void setup() {
 
@@ -49,7 +48,7 @@ public class YourUnitTests {
 		td = c.getTupleDesc(tableId);
 		hf = c.getDbFile(tableId);
 		hp = hf.readPage(0);
-		
+
 		bp = Database.getBufferPool();
 
 	}
@@ -92,52 +91,86 @@ public class YourUnitTests {
 		s[2] = 121;
 		t.setField(1, new StringField(s));
 		// add a new page
-	
-//		assertTrue(t.getField(1).toString().compareTo(testField.toString()) == 0);
+
+		// assertTrue(t.getField(1).toString().compareTo(testField.toString()) == 0);
 	}
 
-	
 	// examine the methods in bufferpool
 	@Test
 	public void testGetPage() throws Exception {
-    	/**two cases:
-    	 * structure to track the locks: read/write locks are different
-    	 * only one write but multiple read
-    	 */
+		/**
+		 * two cases: structure to track the locks: read/write locks are different only
+		 * one write but multiple read
+		 */
 
 		// test multiple read
-		bp.getPage(0, tableId, 0, Permissions.READ_ONLY); 	// one txn read
-	    bp.getPage(1, tableId, 0, Permissions.READ_ONLY); 	// another txn read
-		assertTrue(true); 	// assert true
+		bp.getPage(0, tableId, 0, Permissions.READ_ONLY); // one txn read
+		bp.getPage(1, tableId, 0, Permissions.READ_ONLY); // another txn read
+		assertTrue(true); // assert true
 
 		// test one write
-		bp.getPage(0, tableId, 0, Permissions.READ_WRITE);	// one txn write
-	    bp.getPage(1, tableId, 0, Permissions.READ_WRITE); 	// another txn write 
-		assertTrue(false);	// assert false
-
+		bp.getPage(0, tableId, 0, Permissions.READ_WRITE); // one txn write
+		bp.getPage(1, tableId, 0, Permissions.READ_WRITE); // another txn write
+		assertTrue(false); // assert false
 
 	}
-	
-	
+
 	@Test
 	public void testRelease() throws Exception {
 		// one possible case
 		Tuple t = new Tuple(td);
-		t.setField(0, new IntField(new byte[] {0, 0, 0, (byte)131}));
+		t.setField(0, new IntField(new byte[] { 0, 0, 0, (byte) 131 }));
 		byte[] s = new byte[129];
 		s[0] = 2;
 		s[1] = 98;
 		s[2] = 121;
 		t.setField(1, new StringField(s));
-		
-		bp.getPage(0, tableId, 0, Permissions.READ_WRITE);
-		bp.insertTuple(0, tableId, t); //insert the tuple into the page
-		bp.transactionComplete(0, true); //txn should complete
 
-	    bp.releasePage(0, tableId, 0);
-	    
-	    // remove any key after release
-	    assertTrue(bp.holdsLock(0, tableId, 0)==false);
+		bp.getPage(0, tableId, 0, Permissions.READ_WRITE);
+		bp.insertTuple(0, tableId, t); // insert the tuple into the page
+		bp.transactionComplete(0, true); // txn should complete
+
+		bp.releasePage(0, tableId, 0);
+
+		// remove any key after release
+		assertTrue(bp.holdsLock(0, tableId, 0) == false);
 	}
-	
+
+	@Test
+	public void testGetPagesWithExistedWriteLock() throws Exception {
+		// test two transcation acuiqre same page
+		// two transcation both acquire read access
+		// read
+		bp.getPage(0, tableId, 0, Permissions.READ_ONLY);
+		bp.getPage(1, tableId, 0, Permissions.READ_ONLY);
+		assertTrue(true);
+		assertTrue("should hold read lock", bp.holdsLock(0, tableId, 0));
+		assertTrue("should hold read lock", bp.holdsLock(1, tableId, 0));
+
+		bp.transactionComplete(0, true);
+		bp.transactionComplete(1, true);
+		assertTrue(true);
+
+		// normal write lock release and get
+		bp.getPage(0, tableId, 0, Permissions.READ_WRITE);
+		bp.transactionComplete(0, true);
+		bp.getPage(1, tableId, 0, Permissions.READ_WRITE);
+		bp.transactionComplete(1, true);
+		assertTrue(true);
+
+		// get page with existed write locks
+		try {
+			bp.getPage(0, tableId, 0, Permissions.READ_WRITE);
+			assertTrue("should hold lock", bp.holdsLock(0, tableId, 0));
+			bp.getPage(1, tableId, 0, Permissions.READ_WRITE);
+
+		} catch (Exception e) {
+			assertTrue(true);
+			bp.transactionComplete(0, true);
+			bp.transactionComplete(1, true);
+		}
+		fail("Should have throw an exception");
+
+	}
+
 }
