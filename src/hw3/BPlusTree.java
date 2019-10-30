@@ -212,9 +212,7 @@ public class BPlusTree {
     	}
     	
     }
-    
-    
-
+   
 	private Node getLeftSibling(Stack<Node> st) {
 		@SuppressWarnings("unchecked")
 		Stack<Node> path = (Stack<Node>) st.clone();
