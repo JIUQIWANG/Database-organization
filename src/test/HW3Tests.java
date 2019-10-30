@@ -234,7 +234,6 @@ public class HW3Tests {
 		bt.insert(new Entry(new IntField(3), 0));
 		bt.insert(new Entry(new IntField(10), 0));
 
-		System.out.println("testDelete");
 		bt.delete(new Entry(new IntField(7), 0));
 		bt.delete(new Entry(new IntField(3), 0));
 		bt.delete(new Entry(new IntField(4), 0));
@@ -250,8 +249,6 @@ public class HW3Tests {
 
 		ArrayList<Field> k = in.getKeys();
 		ArrayList<Node> c = in.getChildren();
-//		System.out.println(((InnerNode) in.getChildren().get(0)).getKeys().toString());
-		System.out.println(in.getKeys().toString());
 		assertTrue(k.get(0).compare(RelationalOperator.EQ, new IntField(7)));
 
 		// grab left and right children from root
@@ -343,7 +340,6 @@ public class HW3Tests {
 		bt.insert(new Entry(new IntField(3), 0));
 		bt.insert(new Entry(new IntField(2), 0));
 		bt.insert(new Entry(new IntField(1), 0));
-		System.out.println("testDeleteMergeNodes");
 
 		bt.delete(new Entry(new IntField(1), 0));
 
@@ -691,7 +687,6 @@ public class HW3Tests {
 		// [1,2] [3,4] [6,7] [9, ]
 		assertTrue(bt.getRoot().isLeafNode() == false);
 		InnerNode root = (InnerNode) bt.getRoot();
-		System.out.println(root.getKeys().toString());
 		assertTrue(root.getKeys().get(0).compare(RelationalOperator.EQ, new IntField(4)));
 
 		ArrayList<Node> root_c = root.getChildren();
@@ -808,7 +803,6 @@ public class HW3Tests {
 		bt.insert(new Entry(new IntField(3), 0));
 		bt.insert(new Entry(new IntField(10), 0));
 
-		System.out.println("testHigherDegreesDelete");
 
 		bt.delete(new Entry(new IntField(4), 0));
 		bt.delete(new Entry(new IntField(6), 0)); // That is where merge should happen

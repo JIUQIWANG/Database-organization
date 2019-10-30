@@ -66,34 +66,10 @@ public class LeafNode implements Node {
 		}
 	}
 
-	public int overHalf(int n) {
-		int mid = (this.degree % 2 == 0) ? (this.degree / 2) : (this.degree / 2 + 1);
-		int len = this.entries.size() + n;
-		if (len < mid) {
-			return -1;
-		} else if (len == mid) {
-			return 0;
-		} else {
-			return 1;
-		}
+	public void setEntries(ArrayList<Entry> entries) {
+		this.entries = entries;
 	}
-
-	public void setPrev(LeafNode prev) {
-		this.prev = prev;
-	}
-
-	public LeafNode getPrev() {
-		return this.prev;
-	}
-
-	public void setNext(LeafNode next) {
-		this.next = next;
-	}
-
-	public LeafNode getNext() {
-		return this.next;
-	}
-
+	
 	public void addEntry(Entry e) {
 
 		// keep increasing order
@@ -114,7 +90,7 @@ public class LeafNode implements Node {
 	public void removeEntry(Entry e) {
 
 		for (int i = 0; i < this.entries.size(); i++) {
-			if (this.entries.get(i).getField().compare(RelationalOperator.EQ, e.getField()))
+			if (e.getField().compare(RelationalOperator.EQ, this.entries.get(i).getField()))
 				this.entries.remove(i);
 
 		}
@@ -132,11 +108,6 @@ public class LeafNode implements Node {
 		return this.getLastEntry().getField();
 	}
 
-	public void setEntries(ArrayList<Entry> entries) {
-		this.entries = entries;
-	}
-
-
 	public ArrayList<Field> getKeys() {
 		// your code here
 		ArrayList<Field> keys = new ArrayList<>();
@@ -149,7 +120,7 @@ public class LeafNode implements Node {
 	public boolean containsKey(Field f) {
 
 		for (Entry entry : this.entries) {
-			if (entry.getField().compare(RelationalOperator.EQ, f)) {
+			if (f.compare(RelationalOperator.EQ, entry.getField())) {
 				return true;
 			}
 		}
@@ -158,7 +129,6 @@ public class LeafNode implements Node {
 
 	public LeafNode split() {
 		LeafNode ln = new LeafNode(this.degree);
-		LeafNode next = this.getNext();
 
 		// // if even, left one more than right;
 		int len = this.entries.size();
@@ -170,14 +140,6 @@ public class LeafNode implements Node {
 
 		this.setEntries(lEntry);
 		ln.setEntries(rEntry);
-
-		this.setNext(ln);
-		ln.setPrev(this);
-
-		if (next != null) {
-			ln.setNext(next);
-			next.setPrev(ln);
-		}
 
 		return ln;
 	}

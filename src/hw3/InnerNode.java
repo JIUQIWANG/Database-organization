@@ -22,13 +22,6 @@ public class InnerNode implements Node {
 
 	}
 
-	public void setParent(InnerNode p) {
-		parent = p;
-	}
-
-	public InnerNode getParent() {
-		return parent;
-	}
 	public void setKeys(ArrayList<Field> keys){
 		this.keys = keys;
 	}
@@ -68,7 +61,7 @@ public class InnerNode implements Node {
 
 	public void removeChild(Node node) {
 		this.children.remove(this.children.indexOf(node));
-		this.updateKeys();
+		this.updateKeys(); //always remember to update keys
 	}
 
 	public boolean isFull() {
@@ -87,11 +80,6 @@ public class InnerNode implements Node {
 			return 1;
 		}
 	}
-	// public boolean belowHalfSize() {
-	// int mid = (this.degree%2==0) ? (this.degree/2) : (this.degree/2+1);
-	//
-	// return !(this.keys.size()>=mid);
-	// }
 
 	public Field getKey() {
 		return this.children.get(this.children.size() - 1).getKey();
@@ -100,7 +88,7 @@ public class InnerNode implements Node {
 	public Node getChild(Field f) {
 
 		for (int i = 0; i < this.keys.size(); i++) {
-			if (this.keys.get(i).compare(RelationalOperator.GTE, f)) {
+			if (f.compare(RelationalOperator.LTE, this.keys.get(i))) {
 				return this.children.get(i);
 			}
 		}
@@ -113,8 +101,7 @@ public class InnerNode implements Node {
 		ArrayList<Field> newKeys = new ArrayList<>();
 
 		for (int i = 0; i < this.children.size() - 1; i++) {
-			Field newKey = this.children.get(i).getKey();
-			newKeys.add(newKey);
+			newKeys.add(this.children.get(i).getKey());
 		}
 
 		this.keys = newKeys;
@@ -122,8 +109,7 @@ public class InnerNode implements Node {
 
 	public void updateChildren(ArrayList<Node> children) {
 		this.children = children;
-
-		updateKeys();
+		updateKeys();//always remember to update keys
 
 	}
 
@@ -131,20 +117,21 @@ public class InnerNode implements Node {
 		Field key = node.getKey();
 
 		for (int i = 0; i < this.children.size(); i++) {
-			if (this.children.get(i).getKey().compare(RelationalOperator.GTE, key)) {
+			if (key.compare(RelationalOperator.LTE, this.children.get(i).getKey())) {
 				this.children.add(i, node);
-				updateKeys();
+				updateKeys();//always remember to update keys
 				return;
 			}
 		}
 
 		this.children.add(node);
-		updateKeys();
+		updateKeys(); //always remember to update keys
 	}
 
 	public InnerNode split() {
 
 		InnerNode in = new InnerNode(this.degree);
+		
 		// if even, left one more than right;
 		int len = this.children.size();
 		int mid = (len % 2 == 0) ? (len / 2) : (len / 2 + 1);
@@ -159,37 +146,33 @@ public class InnerNode implements Node {
 
 	}
 
-	public Node getLastChild() {
-		return children.get(children.size() - 1);
-	}
-
 	public Node getFirstChild() {
 		return children.get(0);
 	}
 
-	// get sibling of one child
-	public Node getRightSibling(Node child) {
-		// get this child's index
-		int index = children.indexOf(child);
-
-		// check if it has right sibling
-		if (index + 1 < children.size()) {
-			return children.get(index + 1);
-		} else {
-			return null;
-		}
+	public Node getLastChild() {
+		return children.get(children.size() - 1);
 	}
 
+	// get sibling of one child: left priority
 	public Node getLeftSibling(Node child) {
 		// get this child's index
-		int index = children.indexOf(child);
+		int index = this.children.indexOf(child);
 
-		// check if it has left sibling
-		if (index <= 0) {
-			return null;
-		} else {
-			return children.get(index - 1);
-		}
+		// check left sibling
+		return index>0 ? this.children.get(index - 1) : null;
+
 	}
+	
+	public Node getRightSibling(Node child) {
+		// get this child's index
+		int index = this.children.indexOf(child);
+
+		// check right sibling
+		return index < this.children.size() -1 ? this.children.get(index + 1) : null;
+
+	}
+
+
 
 }

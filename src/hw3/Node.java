@@ -11,15 +11,10 @@ public interface Node {
 	public boolean isLeafNode();
 
 	public boolean isFull();
-
 	public int overHalf();
 
 	public Field getKey();
 	public ArrayList<Field> getKeys();
 
-	public void setParent(InnerNode n);
-
-	public InnerNode getParent();
-	
 
 }

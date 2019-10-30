@@ -27,11 +27,11 @@ public class BPlusTree {
 	// >>> search
 	public LeafNode search(Field f) {
 		// your code here
-		return tree_search(this.root, f);
+		return treeSearch(this.root, f);
 
 	}
 
-	private LeafNode tree_search(Node node, Field f) {
+	private LeafNode treeSearch(Node node, Field f) {
 
 		while (!node.isLeafNode()) {
 			node = ((InnerNode) node).getChild(f);
@@ -47,7 +47,7 @@ public class BPlusTree {
 	public void insert(Entry e) {
 		// your code here
 
-		tree_insert(this.root, e);
+		treeInsert(this.root, e);
 
 		// if the root needs to be split
 		if (this.root.isFull())
@@ -55,7 +55,7 @@ public class BPlusTree {
 		
 	}
 
-	private void tree_insert(Node node, Entry e) {
+	private void treeInsert(Node node, Entry e) {
 
 		// node is a leaf node
 		if (node.isLeafNode()) {
@@ -66,7 +66,7 @@ public class BPlusTree {
 			InnerNode in = (InnerNode) node;
 			Node child = in.getChild(e.getField());
 
-			tree_insert(child, e);
+			treeInsert(child, e);
 
 			// split
 			if (child.isFull())
@@ -121,8 +121,7 @@ public class BPlusTree {
 		}
 		Stack<Node> st = new Stack<>(); // FILO: store path
 		st.push(this.root);
-		System.out.println("root"+this.root.getKeys().toString());
-		tree_delete(st, e);
+		treeDelete(st, e);
 		
 		if (this.root.isFull()) {
 			splitHelper(this.root, null);
@@ -130,9 +129,10 @@ public class BPlusTree {
 		
 		ArrayList<Field> newKeys =  this.root.getKeys();
 
+		// update keys unless it breaks the rule: left < right for bplustree
 		if (this.op && !this.root.isLeafNode() && newKeys.size() == oldKeys.size()) {
 			ArrayList<Node> children = ((InnerNode) this.root).getChildren();
-			System.out.println(newKeys.toString());
+
 			for (int i=0; i<oldKeys.size(); i++) {
 				if(oldKeys.get(i).compare(RelationalOperator.LT, children.get(i+1).getKeys().get(0))) {
 					newKeys.set(i, oldKeys.get(i));
@@ -145,7 +145,7 @@ public class BPlusTree {
 		
 	}
 
-	private void tree_delete(Stack<Node> st, Entry e) {
+	private void treeDelete(Stack<Node> st, Entry e) {
 
 		Node node = st.peek();
 
@@ -154,17 +154,16 @@ public class BPlusTree {
 		} else {
 			Node child = ((InnerNode) node).getChild(e.getField());
 			st.push(child);
-			tree_delete(st, e);
+			treeDelete(st, e);
 		}
 
 		handleBalance(st);
 		st.pop();
-		System.out.println("root"+this.root.getKeys().toString());
 
 		if (this.op) {
 			if (!this.root.isLeafNode()) {
 				InnerNode parent = (InnerNode) this.root;
-				parent.updateKeys();
+				parent.updateKeys(); //always remember to update keys
 				
 			}
 		}
@@ -174,25 +173,21 @@ public class BPlusTree {
 
 		// current node
 		Node node = st.peek();
-		System.out.print("");
 		if (this.root == node) {
 			
 			if (node.isLeafNode()) {
 				// corner case: delete root
 				if (((LeafNode) this.root).getEntries().size() < 1)
 					this.root = null;
-				return;
 			} else {
 				InnerNode in = (InnerNode) this.root;
 				if (in.getChildren().size() <= 1)
 					this.root = in.getFirstChild();
-				return;
 			}
-
+			
+			return;
 		}
-		// System.out.println(((InnerNode) ((InnerNode)
-		// this.getRoot()).getChildren().get(0)).getKeys().toString());
-		// System.out.println(((InnerNode) this.root).getKeys().toString());
+
 		// we don't need to handle if it is overHalf
 		if (node.overHalf() < 0) {
 			this.op = true;
@@ -212,7 +207,6 @@ public class BPlusTree {
 				if (sibling.overHalf() > 0) {
 
 					Entry entryFromLeft = ((LeafNode) sibling).getLastEntry();
-					System.out.println("borrow:"+entryFromLeft.getField().toString());
 					((LeafNode) node).addEntry(entryFromLeft);
 					((LeafNode) sibling).removeEntry(entryFromLeft);
 
@@ -228,10 +222,7 @@ public class BPlusTree {
 				}
 			} else { // handle inner node
 				// borrow
-				// System.out
-				// .println(((InnerNode) ((InnerNode)
-				// this.getRoot()).getChildren().get(0)).getKeys().toString());
-				// System.out.println(((InnerNode) this.root).getKeys().toString());
+
 				if (sibling.overHalf() > 0) {
 
 					Node nodeFromLeft = ((InnerNode) sibling).getLastChild();
@@ -263,7 +254,7 @@ public class BPlusTree {
 		Node child = null, sibling = null, temp = null;
 		InnerNode parent = null;
 
-		int steps = 0; // represent the steps go up from the curNode
+		int steps = 0; // count steps go up from the curNode
 		while (path.size() > 1) {
 			child = path.pop();
 			parent = (InnerNode) path.peek();
@@ -276,7 +267,7 @@ public class BPlusTree {
 			steps++; // go up
 		}
 
-		if (temp == null) { // Cannot find the left sibling
+		if (temp == null) { // no left sibling
 			return null;
 		}
 
@@ -294,7 +285,7 @@ public class BPlusTree {
 		Node child = null, sibling = null, temp = null;
 		InnerNode parent = null;
 
-		int steps = 0; // represent the steps go up from the curNode
+		int steps = 0; // count go up from the curNode
 		while (path.size() > 1) {
 			child = path.pop();
 			parent = (InnerNode) path.peek();
@@ -307,7 +298,7 @@ public class BPlusTree {
 			steps++; // go up
 		}
 
-		if (temp == null) { // Cannot find the left sibling
+		if (temp == null) { // no left sibling
 			return null;
 		}
 
